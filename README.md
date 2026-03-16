@@ -2,6 +2,8 @@
 
 A web-based JSON viewer designed for exploring long LLM conversation messages with ease.
 
+With **agentic AI** and **AI coding** booming, message payloads routinely reach tens or hundreds of thousands of tokens. Standard JSON viewers choke on these sizes. LLM Json View is built for exactly this: visualize, navigate, and extract from massive LLM API responses and conversation logs—without lag.
+
 ## Features
 
 - **Tree View** - Navigate complex JSON structures with expandable tree visualization
