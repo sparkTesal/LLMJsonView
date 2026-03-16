@@ -1,74 +1,72 @@
-# JSON Handle - JSON格式化工具
+# LLM Json View
 
-一个现代化的JSON处理工具，类似于Chrome插件json-handle，但以网页形式提供更灵活的使用体验。
+一款基于 Web 的 JSON 查看器，专为轻松浏览长篇 LLM 对话消息而设计。
 
 ## 功能特性
 
-- **JSON格式化** - 将压缩的JSON数据美化为易读格式
-- **JSON压缩** - 将格式化的JSON压缩为紧凑格式
-- **JSON验证** - 实时验证JSON语法正确性
-- **语法高亮** - 彩色显示不同类型的JSON元素
-- **树形视图** - 提供结构化的树形展示方式
-- **文件上传** - 支持上传JSON文件进行处理
-- **一键复制** - 快速复制处理结果
-- **文件下载** - 将结果保存为JSON文件
-- **错误提示** - 详细的语法错误信息和位置定位
+- **树形视图** - 通过可展开的树形结构浏览复杂 JSON
+- **长文本支持** - 长字符串一键复制（适合 LLM 回复内容）
+- **JSON 格式化** - 将压缩的 JSON 美化为易读格式
+- **JSON 压缩** - 将格式化的 JSON 压缩为紧凑格式
+- **智能修复** - 自动修复常见 JSON 问题（尾随逗号、单引号等）
+- **语法高亮** - 彩色显示不同类型的 JSON 元素
+- **文件上传** - 支持上传 JSON 文件进行处理
+- **剪贴板集成** - 粘贴或直接读取剪贴板（需 HTTPS）
+- **Alfred 工作流** - macOS 上一键打开并粘贴 JSON
 - **响应式设计** - 支持移动端和桌面端
 
 ## 技术栈
 
-- **React 18** - 现代化UI框架
-- **TypeScript** - 类型安全的JavaScript
+- **React 18** - 现代化 UI 框架
+- **TypeScript** - 类型安全的 JavaScript
 - **Vite** - 快速的构建工具
-- **Lucide React** - 美观的图标库
-- **CSS3** - 现代化样式设计
+- **Lucide React** - 图标库
+- **jsonrepair** - 智能 JSON 修复
 
-## 安装和运行
+## 快速开始
 
 ### 开发环境
 
 ```bash
 # 克隆项目
 git clone <repository-url>
-cd json_handle
+cd LLMJsonView
 
 # 安装依赖
 npm install
 
 # 启动开发服务器
 npm run dev
-
-# 或者在容器/服务器环境中后台启动
-conda activate agent_log
-nohup npm run dev 2>&1 &
-
-# 查看后台服务状态
-ps aux | grep vite
-
-# 查看服务日志
-tail -f vite.log
-
-# 停止后台服务
-pkill -f vite
 ```
 
 ### 生产构建
 
 ```bash
-# 构建生产版本
 npm run build
-
-# 预览生产版本
 npm run preview
 ```
 
-## 使用指南
+## 使用说明
 
-1. **输入JSON数据** - 在左侧文本框中粘贴或输入，或点击"上传文件"
-2. **实时验证** - 工具会实时验证JSON语法，右上角显示验证状态
-3. **格式化操作** - 点击"格式化"或"压缩"按钮
-4. **查看结果** - 右侧面板显示处理结果，可切换树形视图
-5. **导出结果** - 点击"复制"或"下载"按钮
+1. **输入 JSON** - 粘贴、输入或上传 JSON 文件（如 LLM API 响应）
+2. **解析并查看** - 点击「解析并查看」切换到树形视图
+3. **浏览** - 展开/折叠节点，在侧边栏预览长文本
+4. **复制** - 任意节点值一键复制（特别适合长消息内容）
+
+## Alfred 工作流（macOS）
+
+如需与 Alfred 无缝集成，请参阅 [alfred-workflow/INSTALLATION_GUIDE.zh-CN.md](alfred-workflow/INSTALLATION_GUIDE.zh-CN.md)。
+
+## 项目结构
+
+```
+src/
+├── App.tsx          # 主应用组件
+├── App.css          # 应用样式
+├── i18n.ts          # 国际化（中/英）
+├── main.tsx         # 应用入口
+└── index.css        # 全局样式
+```
 
 ## 许可证
 
@@ -76,7 +74,7 @@ MIT License
 
 ## 贡献
 
-欢迎提交Issue和Pull Request！
+欢迎提交 Issue 和 Pull Request！
 
 ---
 

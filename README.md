@@ -1,89 +1,61 @@
-# JSON Handle - JSON Formatting Tool
+# LLM Json View
 
-A modern JSON processing tool, similar to the Chrome extension json-handle, but provided as a web app for a more flexible experience.
+A web-based JSON viewer designed for exploring long LLM conversation messages with ease.
 
 ## Features
 
+- **Tree View** - Navigate complex JSON structures with expandable tree visualization
+- **Long String Support** - One-click copy for long text blocks (ideal for LLM responses)
 - **JSON Formatting** - Beautify compressed JSON for readability
 - **JSON Compression** - Compress formatted JSON to compact format
-- **JSON Validation** - Real-time JSON syntax validation
+- **Smart Repair** - Auto-fix common JSON issues (trailing commas, single quotes, etc.)
 - **Syntax Highlighting** - Color-coded display for different JSON element types
-- **Tree View** - Structured tree visualization
 - **File Upload** - Support uploading JSON files for processing
-- **One-Click Copy** - Quick copy of processed results
-- **File Download** - Save results as JSON files
-- **Error Hints** - Detailed syntax error messages with position
-- **Responsive Design** - Support for mobile and desktop
+- **Clipboard Integration** - Paste from clipboard or read directly (HTTPS)
+- **Alfred Workflow** - One-key workflow to open and paste JSON on macOS
+- **Responsive Design** - Works on mobile and desktop
 
 ## Tech Stack
 
 - **React 18** - Modern UI framework
 - **TypeScript** - Type-safe JavaScript
 - **Vite** - Fast build tool
-- **Lucide React** - Beautiful icon library
-- **CSS3** - Modern styling
+- **Lucide React** - Icon library
+- **jsonrepair** - Smart JSON repair
 
-## Installation & Run
+## Quick Start
 
 ### Development
 
 ```bash
 # Clone the project
 git clone <repository-url>
-cd json_handle
+cd LLMJsonView
 
 # Install dependencies
 npm install
 
 # Start dev server
 npm run dev
-
-# Or run in background (container/server)
-conda activate agent_log
-nohup npm run dev 2>&1 &
-
-# Check background service
-ps aux | grep vite
-
-# View logs
-tail -f vite.log
-
-# Stop service
-pkill -f vite
 ```
 
 ### Production Build
 
 ```bash
-# Build for production
 npm run build
-
-# Preview production build
 npm run preview
 ```
 
-## Usage Guide
+## Usage
 
-1. **Input JSON**
-   - Paste or type JSON in the left text area
-   - Or click "Upload File" to select a JSON file
+1. **Input JSON** - Paste, type, or upload a JSON file (e.g., LLM API responses)
+2. **Parse & View** - Click "Parse & View" to switch to tree view
+3. **Explore** - Expand/collapse nodes, preview long strings in side panel
+4. **Copy** - One-click copy for any node value (especially handy for long message content)
 
-2. **Real-time Validation**
-   - Tool validates JSON syntax in real time
-   - Validation status (valid/invalid) shown in the top right
-   - Detailed error messages at the bottom if invalid
+## Alfred Workflow (macOS)
 
-3. **Format Operations**
-   - Click "Format" to beautify JSON
-   - Click "Compress" to compress JSON
-
-4. **View Results**
-   - Right panel shows processed output
-   - Switch to "Tree View" for better readability
-
-5. **Export**
-   - Click "Copy" to copy to clipboard
-   - Click "Download" to save as file
+For seamless integration with Alfred, see [alfred-workflow/INSTALLATION_GUIDE.md](alfred-workflow/INSTALLATION_GUIDE.md).
 
 ## Project Structure
 
@@ -91,6 +63,7 @@ npm run preview
 src/
 ├── App.tsx          # Main app component
 ├── App.css          # App styles
+├── i18n.ts          # i18n (en/zh)
 ├── main.tsx         # App entry
 └── index.css        # Global styles
 ```
