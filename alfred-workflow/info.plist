@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>com.jsonhandle.workflow</string>
+	<key>category</key>
+	<string>Tools</string>
+	<key>connections</key>
+	<dict>
+		<key>F8A8B8C8-D8E8-F8G8-H8I8-J8K8L8M8N8O8</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A1B2C3D4-E5F6-G7H8-I9J0-K1L2M3N4O5P6</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>JSON Handle Workflow</string>
+	<key>description</key>
+	<string>快速打开JSON Handle网页并自动粘贴剪贴板内容</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>JSON Handle</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>2</integer>
+				<key>keyword</key>
+				<string>json</string>
+				<key>subtext</key>
+				<string>打开JSON Handle并自动粘贴剪贴板内容</string>
+				<key>text</key>
+				<string>JSON Handle</string>
+				<key>withspace</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>F8A8B8C8-D8E8-F8G8-H8I8-J8K8L8M8N8O8</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>#!/bin/bash
+
+# 生成会话ID
+session_id=$(date +%s | tail -c 6)
+
+# 打开网页
+open "http://antnluservice1.inc.alipay.net/json_handle?trigger=alfred&amp;session=$session_id"
+
+# 等待并粘贴
+sleep 2
+osascript -e 'tell application "System Events" to keystroke "v" using command down'</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>A1B2C3D4-E5F6-G7H8-I9J0-K1L2M3N4O5P6</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string>JSON Handle Alfred Workflow
+
+使用方法：
+1. 复制需要处理的JSON内容到剪贴板
+2. 打开Alfred（通常是 Cmd+Space）
+3. 输入 "json" 并按回车
+4. 浏览器会自动打开并粘贴剪贴板内容
+
+注意：首次使用需要设置辅助功能权限</string>
+	<key>uidata</key>
+	<dict>
+		<key>A1B2C3D4-E5F6-G7H8-I9J0-K1L2M3N4O5P6</key>
+		<dict>
+			<key>xpos</key>
+			<integer>300</integer>
+			<key>ypos</key>
+			<integer>100</integer>
+		</dict>
+		<key>F8A8B8C8-D8E8-F8G8-H8I8-J8K8L8M8N8O8</key>
+		<dict>
+			<key>xpos</key>
+			<integer>100</integer>
+			<key>ypos</key>
+			<integer>100</integer>
+		</dict>
+	</dict>
+	<key>version</key>
+	<string>3.0.0</string>
+</dict>
+</plist> 
