@@ -24,10 +24,12 @@ import {
   AlertTriangle,
   ArrowLeft,
   Quote,
-  Unlink
+  Unlink,
+  Globe
 } from 'lucide-react';
 import { jsonrepair } from 'jsonrepair';
 import unescapeJs from 'unescape-js';
+import { translations, getFixDescription, type Locale } from './i18n';
 import './App.css';
 
 interface JsonError {
@@ -42,6 +44,7 @@ interface JsonFixSuggestion {
   description: string;
   fixedJson: string;
   confidence: 'high' | 'medium' | 'low';
+  fixKey?: string; // for i18n: 'smart' | 'combined'
 }
 
 interface TreeNode {
@@ -80,9 +83,18 @@ function App() {
   const [showFixSuggestions, setShowFixSuggestions] = useState(false);
   const [debounceTimer, setDebounceTimer] = useState<number | null>(null);
   const [showClipboardButton, setShowClipboardButton] = useState(false);
-
-  // 权限引导状态
+  const [locale, setLocale] = useState<Locale>(() => {
+    const saved = localStorage.getItem('llm-json-view-locale');
+    return (saved === 'zh' || saved === 'en') ? saved : 'en';
+  });
   const [showPermissionGuide, setShowPermissionGuide] = useState(false);
+
+  const t = translations[locale];
+  const toggleLocale = () => {
+    const next: Locale = locale === 'en' ? 'zh' : 'en';
+    setLocale(next);
+    localStorage.setItem('llm-json-view-locale', next);
+  };
 
   // 检测是否支持剪贴板API
   React.useEffect(() => {
@@ -107,7 +119,7 @@ function App() {
     if (trigger === 'alfred') {
       if (sessionId) {
         // 设置页面标题包含会话ID（用于Alfred脚本识别）
-        document.title = `JSON Handle - ${sessionId}`;
+        document.title = `LLM Json View - ${sessionId}`;
         
         // 延迟一点确保标题设置完成
         setTimeout(() => {
@@ -119,7 +131,7 @@ function App() {
             // 检查会话ID长度来判断是简化版还是完整版
             if (sessionId.length <= 6) {
               // 简化版：只聚焦，不监听粘贴事件，等待Alfred自动粘贴
-              setCopyFeedback({show: true, message: '已准备就绪，等待Alfred自动粘贴...'});
+              setCopyFeedback({show: true, message: t.readyForPaste});
               
               // 监听粘贴事件仅用于显示反馈
               const handleSimplePaste = (e: ClipboardEvent) => {
@@ -128,7 +140,7 @@ function App() {
                   // 不阻止默认行为，让粘贴正常进行
                   setTimeout(() => {
                     handleInputChange(pastedText, true);
-                    setCopyFeedback({show: true, message: '已自动粘贴剪贴板内容'});
+                    setCopyFeedback({show: true, message: t.clipboardPasted});
                     setTimeout(() => {
                       setCopyFeedback({show: false, message: ''});
                     }, 3000);
@@ -148,7 +160,7 @@ function App() {
               }, 5000);
             } else {
               // 完整版：监听粘贴事件
-              setCopyFeedback({show: true, message: '已准备就绪，等待自动粘贴...'});
+              setCopyFeedback({show: true, message: t.readyForPaste});
               
               // 监听粘贴事件
               const handlePaste = (e: ClipboardEvent) => {
@@ -184,7 +196,7 @@ function App() {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
     }
-  }, []);
+  }, [locale]);
 
   // 读取剪贴板内容
   const handleReadClipboard = async (isAutomatic = false) => {
@@ -196,26 +208,26 @@ function App() {
           setInputJson(clipboardText);
           handleInputChange(clipboardText, true);
           
-          const message = isAutomatic ? '已自动读取剪贴板内容' : '已读取剪贴板内容';
+          const message = isAutomatic ? t.clipboardReadAuto : t.clipboardRead;
           setCopyFeedback({show: true, message});
           setTimeout(() => {
             setCopyFeedback({show: false, message: ''});
           }, 3000);
         } else {
-          setCopyFeedback({show: true, message: '剪贴板为空'});
+          setCopyFeedback({show: true, message: t.clipboardEmpty});
           setTimeout(() => {
             setCopyFeedback({show: false, message: ''});
           }, 2000);
         }
       } else {
-        setCopyFeedback({show: true, message: '当前环境不支持剪贴板读取（需要HTTPS）'});
+        setCopyFeedback({show: true, message: t.clipboardNotSupported});
         setTimeout(() => {
           setCopyFeedback({show: false, message: ''});
         }, 3000);
       }
     } catch (error) {
       console.error('读取剪贴板失败:', error);
-      setCopyFeedback({show: true, message: '读取剪贴板失败，请手动粘贴'});
+      setCopyFeedback({show: true, message: t.clipboardReadFailed});
       setTimeout(() => {
         setCopyFeedback({show: false, message: ''});
       }, 3000);
@@ -374,9 +386,10 @@ function App() {
           
           fixes.push({
             type: 'other',
-            description: '应用了多种修复规则组合',
+            description: 'fixCombined',
             fixedJson: combinedFix,
-            confidence: 'medium'
+            confidence: 'medium',
+            fixKey: 'combined'
           });
         }
       } catch (error) {
@@ -402,9 +415,10 @@ function App() {
       if (repaired !== jsonString) {
         fixes.push({
           type: 'other',
-          description: '使用智能修复引擎自动修复JSON',
+          description: 'fixSmart',
           fixedJson: repaired,
-          confidence: 'high'
+          confidence: 'high',
+          fixKey: 'smart'
         });
         
         // 分析具体修复了什么问题
@@ -497,7 +511,7 @@ function App() {
       const tree = buildTreeData(parsed);
       setTreeData(tree);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '未知错误';
+      const errorMessage = err instanceof Error ? err.message : t.unknownError;
       
       // 尝试提取行号和列号
       const match = errorMessage.match(/position (\d+)|line (\d+)|column (\d+)/i);
@@ -509,7 +523,7 @@ function App() {
       setError({
         message: errorMessage,
         line: position,
-        fixSuggestion: suggestions.length > 0 ? `找到${suggestions.length}个修复建议` : undefined
+        fixSuggestion: suggestions.length > 0 ? t.fixSuggestionsFound(suggestions.length) : undefined
       });
       setIsValid(false);
       setParsedData(null);
@@ -517,7 +531,7 @@ function App() {
       setFixSuggestions(suggestions);
       setShowFixSuggestions(suggestions.length > 0);
     }
-  }, [buildTreeData, attemptJsonFix]);
+  }, [buildTreeData, attemptJsonFix, t]);
 
   const handleInputChange = (value: string, isPaste = false) => {
     setInputJson(value);
@@ -542,7 +556,7 @@ function App() {
   const applyFixSuggestion = (suggestion: JsonFixSuggestion) => {
     setInputJson(suggestion.fixedJson);
     validateAndParseJson(suggestion.fixedJson);
-    setCopyFeedback({show: true, message: `已应用修复: ${suggestion.description}`});
+    setCopyFeedback({show: true, message: `${t.fixApplied}: ${getFixDescription(locale, suggestion.type, suggestion.fixKey)}`});
     setTimeout(() => {
       setCopyFeedback({show: false, message: ''});
     }, 2000);
@@ -667,7 +681,7 @@ function App() {
       }
       
       // 显示全局提示
-      setCopyFeedback({show: true, message: '已复制到剪贴板'});
+      setCopyFeedback({show: true, message: t.copiedToClipboard});
       setTimeout(() => {
         setCopyFeedback({show: false, message: ''});
       }, 2000);
@@ -685,7 +699,7 @@ function App() {
       }
     } catch (err) {
       console.error('复制失败:', err);
-      setCopyFeedback({show: true, message: '复制失败'});
+      setCopyFeedback({show: true, message: t.copyFailed});
       setTimeout(() => {
         setCopyFeedback({show: false, message: ''});
       }, 2000);
@@ -715,12 +729,12 @@ function App() {
       const parsed = JSON.parse(inputJson);
       const formatted = JSON.stringify(parsed, null, 2);
       setInputJson(formatted);
-      setCopyFeedback({show: true, message: 'JSON已格式化'});
+      setCopyFeedback({show: true, message: t.jsonFormatted});
       setTimeout(() => {
         setCopyFeedback({show: false, message: ''});
       }, 2000);
     } catch (err) {
-      setCopyFeedback({show: true, message: '无法格式化：JSON格式不正确'});
+      setCopyFeedback({show: true, message: t.formatFailed});
       setTimeout(() => {
         setCopyFeedback({show: false, message: ''});
       }, 2000);
@@ -735,12 +749,12 @@ function App() {
       const parsed = JSON.parse(inputJson);
       const compressed = JSON.stringify(parsed);
       setInputJson(compressed);
-      setCopyFeedback({show: true, message: 'JSON已压缩'});
+      setCopyFeedback({show: true, message: t.jsonCompressed});
       setTimeout(() => {
         setCopyFeedback({show: false, message: ''});
       }, 2000);
     } catch (err) {
-      setCopyFeedback({show: true, message: '无法压缩：JSON格式不正确'});
+      setCopyFeedback({show: true, message: t.compressFailed});
       setTimeout(() => {
         setCopyFeedback({show: false, message: ''});
       }, 2000);
@@ -760,7 +774,7 @@ function App() {
       .replace(/\t/g, '\\t');  // 转义制表符
     
     setInputJson(escaped);
-    setCopyFeedback({show: true, message: '字符串已转义'});
+    setCopyFeedback({show: true, message: t.stringEscaped});
     setTimeout(() => {
       setCopyFeedback({show: false, message: ''});
     }, 2000);
@@ -803,12 +817,12 @@ function App() {
       const unescaped = unescapeJs(textToUnescape);
       
       setInputJson(unescaped);
-      setCopyFeedback({show: true, message: '字符串已反转义'});
+      setCopyFeedback({show: true, message: t.stringUnescaped});
       setTimeout(() => {
         setCopyFeedback({show: false, message: ''});
       }, 2000);
     } catch (err) {
-      setCopyFeedback({show: true, message: '反转义失败'});
+      setCopyFeedback({show: true, message: t.unescapeFailed});
       setTimeout(() => {
         setCopyFeedback({show: false, message: ''});
       }, 2000);
@@ -884,7 +898,7 @@ function App() {
               <button 
                 className="expand-all-btn"
                 onClick={handleExpandAll}
-                title={allChildrenExpanded ? "折叠所有子节点" : "展开所有子节点"}
+                title={allChildrenExpanded ? t.collapseAll : t.expandAll}
               >
                 {allChildrenExpanded ? <ChevronsRight size={12} /> : <ChevronsDown size={12} />}
               </button>
@@ -894,7 +908,7 @@ function App() {
             <button 
               className="preview-btn"
               onClick={handlePreview}
-              title="预览详情"
+              title={t.preview}
             >
               <Eye size={12} />
             </button>
@@ -913,7 +927,7 @@ function App() {
                   <button 
                     className={`string-copy-btn ${isStringCopied ? 'copied' : ''}`}
                     onClick={handleLongStringCopy}
-                    title={isStringCopied ? "已复制!" : "复制字符串"}
+                    title={isStringCopied ? t.copied : t.copyString}
                   >
                     {isStringCopied ? (
                       <span className="copy-success">✓</span>
@@ -1008,7 +1022,7 @@ function App() {
         <div className="permission-guide-overlay">
           <div className="permission-guide-modal">
             <div className="permission-guide-header">
-              <h2>🔐 设置辅助功能权限</h2>
+              <h2>🔐 {t.permissionTitle}</h2>
               <button 
                 className="close-btn"
                 onClick={() => setShowPermissionGuide(false)}
@@ -1019,48 +1033,48 @@ function App() {
             
             <div className="permission-guide-content">
               <div className="guide-section">
-                <h3>📋 为什么需要这个权限？</h3>
-                <p>为了实现完全自动化的JSON粘贴功能，Alfred需要辅助功能权限来模拟键盘操作。</p>
+                <h3>📋 {t.permissionWhy}</h3>
+                <p>{t.permissionWhyDesc}</p>
               </div>
               
               <div className="guide-section">
-                <h3>⚙️ 设置步骤</h3>
+                <h3>⚙️ {t.permissionSteps}</h3>
                 <ol className="setup-steps">
                   <li>
-                    <strong>打开系统偏好设置</strong>
-                    <p>点击苹果菜单 → 系统偏好设置</p>
+                    <strong>{t.permissionStep1}</strong>
+                    <p>{t.permissionStep1Desc}</p>
                   </li>
                   <li>
-                    <strong>进入安全性与隐私</strong>
-                    <p>点击"安全性与隐私"图标</p>
+                    <strong>{t.permissionStep2}</strong>
+                    <p>{t.permissionStep2Desc}</p>
                   </li>
                   <li>
-                    <strong>选择隐私标签</strong>
-                    <p>点击窗口顶部的"隐私"标签</p>
+                    <strong>{t.permissionStep3}</strong>
+                    <p>{t.permissionStep3Desc}</p>
                   </li>
                   <li>
-                    <strong>找到辅助功能</strong>
-                    <p>在左侧列表中选择"辅助功能"</p>
+                    <strong>{t.permissionStep4}</strong>
+                    <p>{t.permissionStep4Desc}</p>
                   </li>
                   <li>
-                    <strong>添加Alfred</strong>
-                    <p>点击锁图标解锁，然后点击"+"按钮添加Alfred应用</p>
+                    <strong>{t.permissionStep5}</strong>
+                    <p>{t.permissionStep5Desc}</p>
                   </li>
                   <li>
-                    <strong>确认权限</strong>
-                    <p>确保Alfred旁边的复选框已勾选</p>
+                    <strong>{t.permissionStep6}</strong>
+                    <p>{t.permissionStep6Desc}</p>
                   </li>
                 </ol>
               </div>
               
               <div className="guide-section">
-                <h3>🚀 完成设置后</h3>
-                <p>设置完成后，您就可以享受完全自动化的JSON处理体验了：</p>
+                <h3>🚀 {t.permissionDone}</h3>
+                <p>{t.permissionDoneDesc}</p>
                 <ul className="feature-list">
-                  <li>✅ 复制JSON内容到剪贴板</li>
-                  <li>✅ 在Alfred中输入 "json"</li>
-                  <li>✅ 自动打开网页并粘贴内容</li>
-                  <li>✅ 支持任意大小的JSON数据</li>
+                  <li>✅ {t.permissionItem1}</li>
+                  <li>✅ {t.permissionItem2}</li>
+                  <li>✅ {t.permissionItem3}</li>
+                  <li>✅ {t.permissionItem4}</li>
                 </ul>
               </div>
               
@@ -1072,25 +1086,25 @@ function App() {
                     window.open('x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility');
                   }}
                 >
-                  🔧 打开系统偏好设置
+                  🔧 {t.openSystemPrefs}
                 </button>
                 
                 <button 
                   className="secondary-btn"
                   onClick={() => {
                     setShowPermissionGuide(false);
-                    setCopyFeedback({show: true, message: '您可以稍后手动粘贴JSON内容'});
+                    setCopyFeedback({show: true, message: t.pasteLater});
                     setTimeout(() => {
                       setCopyFeedback({show: false, message: ''});
                     }, 3000);
                   }}
                 >
-                  稍后设置
+                  {t.setLater}
                 </button>
               </div>
               
               <div className="guide-note">
-                <p><strong>💡 提示：</strong>如果您不想设置权限，也可以手动粘贴JSON内容到输入框中。</p>
+                <p><strong>💡 </strong>{t.permissionTip}</p>
               </div>
             </div>
           </div>
@@ -1101,15 +1115,15 @@ function App() {
       {!isViewerMode && (
         <>
           <header className="header">
-            <h1>JSON Handle</h1>
-            <p>强大的JSON格式化和验证工具</p>
+            <h1>{t.appName}</h1>
+            <p>{t.appSubtitle}</p>
           </header>
 
           <div className="toolbar">
             <div className="toolbar-left">
               <label className="file-upload">
                 <Upload size={16} />
-                上传文件
+                {t.uploadFile}
                 <input type="file" accept=".json,.txt" onChange={handleFileUpload} />
               </label>
               
@@ -1117,64 +1131,73 @@ function App() {
                 <button 
                   className="toolbar-btn clipboard-btn"
                   onClick={() => handleReadClipboard(false)}
-                  title="读取剪贴板内容"
+                  title={t.readClipboard}
                 >
                   <Copy size={16} />
-                  读取剪贴板
+                  {t.readClipboard}
                 </button>
               )}
               
               {!showInput && (
                 <button className="toolbar-btn" onClick={() => setShowInput(true)}>
-                  编辑JSON
+                  {t.editJson}
                 </button>
               )}
             </div>
 
             <div className="toolbar-center">
-              <div className="toolbar-title">JSON Handle</div>
-              <div className="toolbar-subtitle">强大的JSON格式化和验证工具</div>
+              <div className="toolbar-title">{t.appName}</div>
+              <div className="toolbar-subtitle">{t.appSubtitle}</div>
             </div>
 
             <div className="toolbar-right">
               <button 
+                className="toolbar-btn lang-toggle"
+                onClick={toggleLocale}
+                title={locale === 'en' ? '中文' : 'English'}
+              >
+                <Globe size={16} />
+                <span>{locale === 'en' ? '中文' : 'EN'}</span>
+              </button>
+              
+              <button 
                 className="toolbar-btn"
                 onClick={formatJson}
                 disabled={!inputJson.trim()}
-                title="格式化JSON"
+                title={t.format}
               >
                 <Expand size={14} />
-                格式化
+                {t.format}
               </button>
               
               <button 
                 className="toolbar-btn"
                 onClick={compressJson}
                 disabled={!inputJson.trim()}
-                title="压缩JSON"
+                title={t.compress}
               >
                 <Minimize size={14} />
-                压缩
+                {t.compress}
               </button>
               
               <button 
                 className="toolbar-btn"
                 onClick={escapeJson}
                 disabled={!inputJson.trim()}
-                title="转义JSON"
+                title={t.escape}
               >
                 <Quote size={14} />
-                转义
+                {t.escape}
               </button>
               
               <button 
                 className="toolbar-btn"
                 onClick={unescapeJson}
                 disabled={!inputJson.trim()}
-                title="反转义JSON"
+                title={t.unescape}
               >
                 <Unlink size={14} />
-                反转义
+                {t.unescape}
               </button>
             </div>
           </div>
@@ -1185,16 +1208,16 @@ function App() {
         {showInput && (
           <div className="input-section">
             <div className="input-header">
-              <h3>输入 JSON</h3>
+              <h3>{t.inputJson}</h3>
               <div className="input-actions">
-                {isValid === true && <span className="status-valid">✓ 有效的JSON</span>}
-                {isValid === false && <span className="status-invalid">✗ 无效的JSON</span>}
+                {isValid === true && <span className="status-valid">✓ {t.validJson}</span>}
+                {isValid === false && <span className="status-invalid">✗ {t.invalidJson}</span>}
                 <button 
                   className="parse-btn"
                   onClick={handleSubmit}
                   disabled={!isValid}
                 >
-                  解析并查看
+                  {t.parseAndView}
                 </button>
               </div>
             </div>
@@ -1220,7 +1243,7 @@ function App() {
                   });
                 }, 10);
               }}
-              placeholder="在这里粘贴您的JSON数据..."
+              placeholder={t.placeholder}
               spellCheck={false}
             />
             
@@ -1229,7 +1252,7 @@ function App() {
                 <div className="error-info">
                   <AlertTriangle size={16} />
                   <span>{error.message}</span>
-                  {error.line && <span>位置: {error.line}</span>}
+                  {error.line && <span>{t.position}: {error.line}</span>}
                 </div>
                 {error.fixSuggestion && (
                   <div className="fix-hint">
@@ -1240,7 +1263,7 @@ function App() {
                         className="show-fixes-btn"
                         onClick={() => setShowFixSuggestions(!showFixSuggestions)}
                       >
-                        {showFixSuggestions ? '隐藏修复建议' : '查看修复建议'}
+                        {showFixSuggestions ? t.hideFixSuggestions : t.showFixSuggestions}
                       </button>
                     )}
                   </div>
@@ -1250,13 +1273,13 @@ function App() {
             
             {showFixSuggestions && fixSuggestions.length > 0 && (
               <div className="fix-suggestions">
-                <h4>修复建议</h4>
+                <h4>{t.fixSuggestions}</h4>
                 {fixSuggestions.map((suggestion, index) => (
                   <div key={index} className={`fix-suggestion ${suggestion.confidence}`}>
                     <div className="fix-header">
-                      <span className="fix-description">{suggestion.description}</span>
+                      <span className="fix-description">{getFixDescription(locale, suggestion.type, suggestion.fixKey)}</span>
                       <span className={`fix-confidence ${suggestion.confidence}`}>
-                        {suggestion.confidence === 'high' ? '高' : suggestion.confidence === 'medium' ? '中' : '低'}置信度
+                        {suggestion.confidence === 'high' ? t.high : suggestion.confidence === 'medium' ? t.medium : t.low} {t.confidence}
                       </span>
                     </div>
                     <div className="fix-actions">
@@ -1265,15 +1288,15 @@ function App() {
                         onClick={() => applyFixSuggestion(suggestion)}
                       >
                         <Wrench size={14} />
-                        应用此修复
+                        {t.applyFix}
                       </button>
                       <button 
                         className="preview-fix-btn"
                         onClick={() => copyToClipboard(suggestion.fixedJson)}
-                        title="复制修复后的JSON"
+                        title={t.copyRepairedJson}
                       >
                         <Copy size={14} />
-                        复制
+                        {t.copy}
                       </button>
                     </div>
                   </div>
@@ -1293,7 +1316,7 @@ function App() {
                   setShowInput(true);
                   setIsViewerMode(false);
                 }}
-                title="返回编辑"
+                title={t.backToEdit}
               >
                 <ArrowLeft size={18} />
               </button>
@@ -1302,12 +1325,19 @@ function App() {
             {/* 全屏模式下的固定操作栏 */}
             {isViewerMode && (
               <div className="control-panel">
-                {/* 更多操作菜单 */}
+                <button 
+                  className="control-icon-btn lang-toggle"
+                  onClick={toggleLocale}
+                  title={locale === 'en' ? '中文' : 'English'}
+                >
+                  <Globe size={18} />
+                  <span>{locale === 'en' ? '中文' : 'EN'}</span>
+                </button>
                 <div className="control-menu">
                   <button 
                     className="control-icon-btn menu-trigger"
                     onClick={() => setShowActionMenu(!showActionMenu)}
-                    title="更多操作"
+                    title={t.moreActions}
                   >
                     <MoreVertical size={18} />
                   </button>
@@ -1316,7 +1346,7 @@ function App() {
                     <div className="action-menu">
                       <label className="menu-item file-upload-menu">
                         <Upload size={16} />
-                        <span>上传文件</span>
+                        <span>{t.uploadFileMenu}</span>
                         <input type="file" accept=".json,.txt" onChange={handleFileUpload} />
                       </label>
                       
@@ -1329,7 +1359,7 @@ function App() {
                         }}
                       >
                         <Settings size={16} />
-                        <span>编辑JSON</span>
+                        <span>{t.editJsonMenu}</span>
                       </button>
                       
                       <button 
@@ -1340,7 +1370,7 @@ function App() {
                         }}
                       >
                         <Copy size={16} />
-                        <span>复制JSON</span>
+                        <span>{t.copyJson}</span>
                       </button>
                       
                       <button 
@@ -1351,7 +1381,7 @@ function App() {
                         }}
                       >
                         <Download size={16} />
-                        <span>下载文件</span>
+                        <span>{t.downloadFile}</span>
                       </button>
                       
                       <button 
@@ -1362,7 +1392,7 @@ function App() {
                         }}
                       >
                         <Trash2 size={16} />
-                        <span>清空重置</span>
+                        <span>{t.clearReset}</span>
                       </button>
                     </div>
                   )}
@@ -1416,7 +1446,7 @@ function App() {
               <button 
                 className="copy-btn"
                 onClick={() => copyToClipboard(selectedNode.displayValue)}
-                title="复制值"
+                title={t.copyValue}
               >
                 <Copy size={14} />
               </button>

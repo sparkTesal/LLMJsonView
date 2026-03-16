@@ -150,6 +150,30 @@
   cursor: not-allowed;
 }
 
+.toolbar-btn.lang-toggle {
+  min-width: 3.2em;
+  white-space: nowrap;
+}
+
+.control-panel .lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.6rem;
+  min-width: 3.2em;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.control-panel .lang-toggle:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 .file-upload {
   display: flex;
   align-items: center;
