@@ -70,6 +70,18 @@ src/
 └── index.css        # 全局样式
 ```
 
+## 未来计划
+
+- **树形虚拟滚动** - 超大树形结构（10 万+ 节点）虚拟滚动，避免卡顿
+- **搜索与过滤** - 全文搜索、按 key/value 过滤、路径跳转（如 `messages[0].content`）
+- **LLM 格式识别** - 自动识别 OpenAI/Anthropic/Claude 格式，高亮 `role`（user/assistant/system）
+- **Token 统计** - 常见模型（GPT-4、Claude 等）的 token 估算
+- **JSON 对比** - 并排对比两份 JSON（便于对比 LLM 输出版本）
+- **对话扁平化** - 将 messages 提取为可读的时间线视图
+- **浏览器扩展** - 任意页面快速唤起
+- **VS Code 扩展** - 在编辑器侧边栏查看 JSON
+- **深色模式** - 主题切换
+
 ## 许可证
 
 MIT License

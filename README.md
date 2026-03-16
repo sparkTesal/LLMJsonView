@@ -70,6 +70,18 @@ src/
 └── index.css        # Global styles
 ```
 
+## Future Plans
+
+- **Tree virtualization** - Virtual scroll for huge trees (100K+ nodes) to avoid lag
+- **Search & filter** - Full-text search, filter by key/value, jump to path (e.g. `messages[0].content`)
+- **LLM format detection** - Auto-detect OpenAI/Anthropic/Claude formats, highlight `role` (user/assistant/system)
+- **Token count** - Approximate token count for common models (GPT-4, Claude, etc.)
+- **JSON diff** - Side-by-side compare two JSON files (useful for LLM output versions)
+- **Conversation flatten** - Extract messages into a readable timeline view
+- **Browser extension** - Quick access from any page
+- **VS Code extension** - View JSON in editor sidebar
+- **Dark mode** - Theme toggle
+
 ## License
 
 MIT License
